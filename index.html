@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Class Activities - Home</title>
+  <link rel="stylesheet" href="styles.css" />
+	<style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+    body {
+      background-color: #f5f5f5;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      background-color: #333;
+      padding: 10px;
+      margin: 0;
+    }
+
+    nav li {
+      margin: 0 15px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .quote-container {
+      margin: 30px auto;
+      font-size: 24px;
+      width: 80%;
+    }
+
+    .btn-container {
+      margin-top: 30px;
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .button-49,
+    .button-49:after {
+      width: 150px;
+      height: 76px;
+      line-height: 78px;
+      font-size: 20px;
+      font-family: 'Bebas Neue', sans-serif;
+      background: linear-gradient(45deg, transparent 5%, #FF013C 5%);
+      border: 0;
+      color: #fff;
+      letter-spacing: 3px;
+      box-shadow: 6px 0px 0px #00E6F6;
+      outline: transparent;
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      display: inline-block;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .button-49:after {
+      --slice-0: inset(50% 50% 50% 50%);
+      --slice-1: inset(80% -6px 0 0);
+      --slice-2: inset(50% -6px 30% 0);
+      --slice-3: inset(10% -6px 85% 0);
+      --slice-4: inset(40% -6px 43% 0);
+      --slice-5: inset(80% -6px 5% 0);
+
+      content: 'ALTERNATE TEXT';
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent 3%, #00E6F6 3%, #00E6F6 5%, #FF013C 5%);
+      text-shadow: -3px -3px 0px #F8F005, 3px 3px 0px #00E6F6;
+      clip-path: var(--slice-0);
+    }
+
+    .button-49:hover:after {
+      animation: 1s glitch;
+      animation-timing-function: steps(2, end);
+    }
+
+    @keyframes glitch {
+      0% { clip-path: var(--slice-1); transform: translate(-20px, -10px); }
+      10% { clip-path: var(--slice-3); transform: translate(10px, 10px); }
+      20% { clip-path: var(--slice-1); transform: translate(-10px, 10px); }
+      30% { clip-path: var(--slice-3); transform: translate(0px, 5px); }
+      40% { clip-path: var(--slice-2); transform: translate(-5px, 0px); }
+      50% { clip-path: var(--slice-3); transform: translate(5px, 0px); }
+      60% { clip-path: var(--slice-4); transform: translate(5px, 10px); }
+      70% { clip-path: var(--slice-2); transform: translate(-10px, 10px); }
+      80% { clip-path: var(--slice-5); transform: translate(20px, -10px); }
+      90% { clip-path: var(--slice-1); transform: translate(-10px, 0px); }
+      100% { clip-path: var(--slice-1); transform: translate(0); }
+    }
+
+    @media (min-width: 768px) {
+      .button-49,
+      .button-49:after {
+        width: 200px;
+        height: 86px;
+        line-height: 88px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="stocks.html">Stocks</a></li>
+      <li><a href="dogs.html">Dogs</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>INST377 - Activities</h1>
+
+  
+	    <div class="quote-container" id="quote-container">
+    <strong>Quote of the Page Load</strong>
+    <p id="quote" style="margin-top:10px;"></p>
+  </div>
+
+    <div class="btn-container">
+      <a href="stocks.html" class="button-49">Stocks</a>
+    <a href="dogs.html" class="button-49">Dogs</a>
+    </div>
+  </main>
+
+  <section class="audio-section">
+    <h2>Audio Commands</h2>
+    <p>
+      Say “Hello” → Alerts “Hello World”<br/>
+      Say “Change the color to [color]” → Changes background<br/>
+      Say “Navigate to [page]” → Navigates to Home, Dogs, or Stocks<br/>
+    </p>
+    <button onclick="annyang.start()">Turn On Audio</button>
+    <button onclick="annyang.abort()">Turn Off Audio</button>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+  <script>
+
+    fetch('https://zenquotes.io/api/quotes/')
+      .then(res => res.json())
+      .then(data => {
+        const randomIndex = Math.floor(Math.random() * data.length);
+        const quote = data[randomIndex];
+        document.getElementById('quote').innerText = `"${quote.q}" - ${quote.a}`;
+      })
+      .catch(() => {
+        document.getElementById('quote').innerText = "Failed to load quote.";
+      });
+
+
+    if (annyang) {
+      const commands = {
+        'hello': () => alert('Hello World'),
+        'change the color to *color': (color) => {
+          document.body.style.backgroundColor = color;
+        },
+        'navigate to *page': (page) => {
+          const lowerPage = page.toLowerCase();
+          if (lowerPage.includes("home")) window.location.href = "index.html";
+          else if (lowerPage.includes("dogs")) window.location.href = "dogs.html";
+          else if (lowerPage.includes("stocks")) window.location.href = "stocks.html";
+        }
+      };
+      annyang.addCommands(commands);
+    }
+  </script>
+</body>
+</html>

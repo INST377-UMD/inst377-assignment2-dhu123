@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Class Activities - Dogs</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+  <style>
+    #breedInfo {
+      display: none;
+      background-color: #e6f0ff;
+      border: 3px solid black;
+      padding: 20px;
+      margin: 30px auto;
+      max-width: 700px;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      text-align: left;
+    }
+
+    #breedInfo h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    #breedInfo p {
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="stocks.html">Stocks</a></li>
+      <li><a href="dogs.html">Dogs</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Dog Carousel 🐶</h1>
+
+    <div class="swiper mySwiper">
+      <div class="swiper-wrapper" id="dogSlider"></div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+
+    <div id="breedButtons" style="margin-top: 20px;"></div>
+
+    <div id="breedInfo">
+      <h3 id="breedName"></h3>
+      <p><strong>Description:</strong> <span id="breedDesc"></span></p>
+      <p><strong>Min Life:</strong> <span id="minLife"></span></p>
+      <p><strong>Max Life:</strong> <span id="maxLife"></span></p>
+    </div>
+  </main>
+
+  <section class="audio-section">
+    <h2>Audio Commands</h2>
+    <p>
+      Say “Hello” → Alerts “Hello World”<br/>
+      Say “Change the color to [color]” → Changes background<br/>
+      Say “Navigate to [page]” → Navigates to Home, Dogs, or Stocks<br/>
+      Say “Load Dog Breed [name]” → Loads breed info<br/>
+    </p>
+    <button onclick="annyang.start()">Turn On Audio</button>
+    <button onclick="annyang.abort()">Turn Off Audio</button>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+  <script>
+    const sliderEl = document.getElementById("dogSlider");
+    const breedInfoBox = document.getElementById('breedInfo');
+    let allBreeds = [];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    async function loadDogImages() {
+      const res = await fetch('https://dog.ceo/api/breeds/image/random/10');
+      const data = await res.json();
+      sliderEl.innerHTML = data.message.map(img =>
+        `<div class="swiper-slide"><img src="${img}" /></div>`
+      ).join('');
+
+      new Swiper(".mySwiper", {
+        navigation: {
+          nextEl: ".swiper-button-next",
+          prevEl: ".swiper-button-prev"
+        },
+        loop: true
+      });
+    }
+
+    async function loadBreeds() {
+      const res = await fetch('https://api.thedogapi.com/v1/breeds');
+      allBreeds = await res.json();
+      const randomTen = shuffle(allBreeds).slice(0, 10);
+      const buttonContainer = document.getElementById('breedButtons');
+      buttonContainer.innerHTML = "";
+
+      randomTen.forEach(breed => {
+        const btn = document.createElement('button');
+        btn.textContent = breed.name;
+        btn.setAttribute("class", "css-button");
+        btn.onclick = () => showBreedInfo(breed.name);
+        buttonContainer.appendChild(btn);
+      });
+    }
+
+    function showBreedInfo(breedName) {
+      const breed = allBreeds.find(b => b.name.toLowerCase() === breedName.toLowerCase());
+      if (!breed) return alert("Breed not found");
+
+      document.getElementById('breedName').innerText = breed.name;
+      document.getElementById('breedDesc').innerText = breed.temperament || 'No description available.';
+      document.getElementById('minLife').innerText = breed.life_span?.split("–")[0].trim() || 'N/A';
+      document.getElementById('maxLife').innerText = breed.life_span?.split("–")[1]?.trim() || breed.life_span || 'N/A';
+      breedInfoBox.style.display = 'block';
+    }
+
+    if (annyang) {
+      const commands = {
+        'hello': () => alert('Hello World'),
+        'change the color to *color': (color) => {
+          document.body.style.backgroundColor = color;
+        },
+        'navigate to *page': (page) => {
+          const p = page.toLowerCase();
+          if (p.includes("home")) window.location.href = "index.html";
+          else if (p.includes("dogs")) window.location.href = "dogs.html";
+          else if (p.includes("stocks")) window.location.href = "stocks.html";
+        },
+        'load dog breed *breed': (breed) => {
+          showBreedInfo(breed);
+        }
+      };
+      annyang.addCommands(commands);
+    }
+
+    loadDogImages();
+    loadBreeds();
+  </script>
+</body>
+</html>
