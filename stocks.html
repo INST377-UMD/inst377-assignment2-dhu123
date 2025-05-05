@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Class Activities - Stocks</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="stocks.html">Stocks</a></li>
+      <li><a href="dogs.html">Dogs</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Stock Lookup</h1>
+    <input type="text" id="tickerInput" required>
+    <select id="daysSelect">
+      <option value="30">30 Days</option>
+      <option value="60">60 Days</option>
+      <option value="90">90 Days</option>
+    </select>
+    <button class="css-button" onclick="fetchStockData()">Get Stock Chart</button>
+
+    <canvas id="stockChart" width="400" height="200"></canvas>
+
+    <h2>Top 5 Reddit Stocks (April 3, 2022)</h2>
+    <table id="redditTable" border="1" style="margin: 0 auto; text-align: center;">
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Comment Count</th>
+          <th>Sentiment</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <section class="audio-section">
+    <h2>Audio Commands</h2>
+    <p>
+      Say “Hello” → Alerts “Hello World”<br/>
+      Say “Change the color to [color]” → Changes background<br/>
+      Say “Navigate to [page]” → Navigates to Home, Dogs, or Stocks<br/>
+      Say “Lookup [stock]” → Fetches 30-day chart for the stock<br/>
+    </p>
+    <button onclick="annyang.start()">Turn On Audio</button>
+    <button onclick="annyang.abort()">Turn Off Audio</button>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+  <script>
+    const POLYGON_API_KEY = 'rBfKGm5PJ_Zm7UdhbbLpGTaZV0PJR2Aa';
+
+    async function fetchStockData() {
+      const ticker = document.getElementById('tickerInput').value.toUpperCase();
+      const days = document.getElementById('daysSelect').value;
+      const to = new Date().toISOString().split('T')[0];
+      const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${from}/${to}?adjusted=true&sort=asc&apiKey=${POLYGON_API_KEY}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const labels = data.results.map(entry => new Date(entry.t).toLocaleDateString());
+        const prices = data.results.map(entry => entry.c);
+
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        if (window.chartInstance) window.chartInstance.destroy();
+        window.chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: `${ticker} Closing Prices`,
+              data: prices,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true
+          }
+        });
+      } catch (error) {
+        alert("Error fetching stock data.");
+        console.error(error);
+      }
+    }
+
+    async function fetchRedditStocks() {
+      try {
+        const res = await fetch("https://tradestie.com/api/v1/apps/reddit?date=2022-04-03");
+        const data = await res.json();
+        const top5 = data.slice(0, 5);
+        const tbody = document.querySelector('#redditTable tbody');
+        tbody.innerHTML = "";
+
+        top5.forEach(stock => {
+          const row = document.createElement("tr");
+          const sentimentIcon = stock.sentiment === "Bullish" ? "📈" : "📉";
+          row.innerHTML = `
+            <td><a href="https://finance.yahoo.com/quote/${stock.ticker}" target="_blank">${stock.ticker}</a></td>
+            <td>${stock.no_of_comments}</td>
+            <td>${sentimentIcon} (${stock.sentiment})</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        console.error("Failed to load Reddit stock data", error);
+      }
+    }
+
+    fetchRedditStocks();
+
+    if (annyang) {
+      const commands = {
+        'hello': () => alert('Hello World'),
+        'change the color to *color': (color) => {
+          document.body.style.backgroundColor = color;
+        },
+        'navigate to *page': (page) => {
+          const p = page.toLowerCase();
+          if (p.includes("home")) window.location.href = "index.html";
+          else if (p.includes("dogs")) window.location.href = "dogs.html";
+          else if (p.includes("stocks")) window.location.href = "stocks.html";
+        },
+        'lookup *stock': (stock) => {
+          document.getElementById('tickerInput').value = stock.toUpperCase();
+          document.getElementById('daysSelect').value = "30";
+          fetchStockData();
+        }
+      };
+      annyang.addCommands(commands);
+    }
+  </script>
+</body>
+</html>
